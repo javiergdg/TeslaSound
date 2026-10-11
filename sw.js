@@ -1,8 +1,9 @@
-const CACHE_NAME = 'teslasound-v12';
+const CACHE_NAME = 'teslasound-v23';
 const ASSETS_TO_CACHE = [
   './',
   './styles.css',
   './vehicles.js',
+  './engine-dsp.js',
   './audio-engine.js',
   './physics.js',
   './app.js',

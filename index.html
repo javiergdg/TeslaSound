@@ -112,12 +112,22 @@
             <div class="instrument-card">
                 <div class="gauge-canvas-wrapper">
                     <canvas id="gaugeCanvas" width="280" height="280"></canvas>
-                    <div class="gauge-center-readout">
-                        <div class="gear-label">VİTES</div>
+                    <div class="gauge-center-readout" id="gaugeCenterReadout" title="Vites Modunu Değiştir (Otomatik / Manuel)">
+                        <div class="gear-label" id="gearModeLabel">OTOMATİK</div>
                         <div class="gear-display" id="gearDisplay">N</div>
                         <div class="speed-value" id="speedValue">0</div>
                         <div class="speed-unit">KM/H</div>
                     </div>
+                </div>
+
+                <!-- Ergonomik Kokpit Vites Kulakçıkları (Paddle Shifters) -->
+                <div class="cockpit-paddles" id="cockpitPaddles">
+                    <button class="cockpit-paddle-btn paddle-down" id="cockpitPaddleDown" aria-label="Vites Düşür" title="Vites Düşür">
+                        <span id="paddleDownLabel" class="paddle-label paddle-text">VİTES DÜŞÜR</span>
+                    </button>
+                    <button class="cockpit-paddle-btn paddle-up" id="cockpitPaddleUp" aria-label="Vites Yükselt" title="Vites Yükselt">
+                        <span id="paddleUpLabel" class="paddle-label paddle-text">VİTES YÜKSELT</span>
+                    </button>
                 </div>
             </div>
 
@@ -142,49 +152,14 @@
             </div>
         </main>
 
-        <!-- Car Selection Carousel -->
-        <section>
-            <div class="section-header">
-                <span class="section-title">Garaj / Araç Seçimi</span>
-            </div>
-            <div class="cars-grid" id="carsGrid">
-                <!-- Dynamically populated from vehicles.js -->
-            </div>
-            <!-- Ses Profili Açıklama Şeridi -->
-            <div id="soundProfileBar" style="
-                margin-top: 10px;
-                background: var(--bg-panel);
-                border: 1px solid var(--border-color);
-                border-left: 3px solid var(--car-accent);
-                border-radius: 10px;
-                padding: 10px 16px;
-                font-size: 0.8rem;
-                color: var(--text-secondary);
-                line-height: 1.5;
-                transition: border-color 0.3s ease;
-            ">
-                <span style="color: var(--car-accent); font-weight: 700; margin-right: 6px; transition: color 0.3s ease;">🔊 Ses Karakteri:</span>
-                <span id="soundProfileText"></span>
-            </div>
-        </section>
-
-        <!-- Primary Controls Strip -->
+        <!-- Primary Controls Strip (Vites & Egzoz Ayarları Yukarıda) -->
         <section class="controls-card">
             <!-- Mode Selector: Auto vs Manual -->
             <div class="control-group">
-                <span class="control-label">Vites Modu:</span>
+                <span class="control-label">Vites:</span>
                 <div class="pill-toggle">
                     <button class="pill-btn active" id="modeAuto">Otomatik</button>
                     <button class="pill-btn" id="modeManual">Manuel</button>
-                </div>
-            </div>
-
-            <!-- Source Selector: GPS vs Test Bench -->
-            <div class="control-group">
-                <span class="control-label">Kaynak:</span>
-                <div class="pill-toggle">
-                    <button class="pill-btn active" id="sourceGps">GPS (Sürüş)</button>
-                    <button class="pill-btn" id="sourceSim">Test Masası</button>
                 </div>
             </div>
 
@@ -199,11 +174,12 @@
                 </div>
             </div>
 
-            <!-- Auto-Start Ignition Preference -->
+            <!-- Source Selector: GPS vs Test Bench -->
             <div class="control-group">
-                <span class="control-label">Oto-Marş:</span>
+                <span class="control-label">Kaynak:</span>
                 <div class="pill-toggle">
-                    <button class="pill-btn" id="autoStartBtn" title="Sayfa ilk açıldığında otomatik marşa basılsın mı?">Açık</button>
+                    <button class="pill-btn active" id="sourceGps">GPS (Sürüş)</button>
+                    <button class="pill-btn" id="sourceSim">Test Masası</button>
                 </div>
             </div>
 
@@ -237,11 +213,85 @@
             </div>
         </div>
 
-        <!-- Guidance & Tesla Scroll Wheel Footer -->
+        <!-- Car Selection Carousel -->
+        <section class="garage-section">
+            <div class="section-header">
+                <span class="section-title">🏎️ Garaj / Araç Seçimi</span>
+            </div>
+            <div class="cars-grid" id="carsGrid">
+                <!-- Dynamically populated from vehicles.js -->
+            </div>
+            <!-- Ses Profili Açıklama Şeridi -->
+            <div id="soundProfileBar" style="
+                margin-top: 10px;
+                background: var(--bg-panel);
+                border: 1px solid var(--border-color);
+                border-left: 3px solid var(--car-accent);
+                border-radius: 10px;
+                padding: 10px 16px;
+                font-size: 0.8rem;
+                color: var(--text-secondary);
+                line-height: 1.5;
+                transition: border-color 0.3s ease;
+            ">
+                <span style="color: var(--car-accent); font-weight: 700; margin-right: 6px; transition: color 0.3s ease;">🔊 Ses Karakteri:</span>
+                <span id="soundProfileText"></span>
+            </div>
+        </section>
+
+        <!-- Guidance & Tesla Fullscreen Footer -->
         <footer class="footer-tips">
-            <p><strong>Tesla İpucu:</strong> Bu sayfayı doğrudan Tesla'nın dahili Chromium tarayıcısında açabilirsiniz. Direksiyonun <strong>sol/sağ kaydırma tekerleğini</strong> yukarı/aşağı çevirerek manuel vites değiştirebilirsiniz!</p>
-            <p style="margin-top: 4px;">Klavye Kısayolları: <kbd>W</kbd> Gaz | <kbd>S</kbd> Fren | <kbd>E</kbd> Vites Büyüt | <kbd>Q</kbd> Vites Küçült | <kbd>M</kbd> Sesi Kapat/Aç</p>
+            <p><strong>Tesla İpucu:</strong> Tesla ekranında sağ üstteki <strong>Tam Ekran</strong> simgesine dokunarak Saf Kokpit Modunu açabilir, kadranın hemen altındaki <strong>VİTES DÜŞÜR</strong> ve <strong>VİTES YÜKSELT</strong> kulakçıklarına dokunarak dilediğiniz gibi manuel vites atabilirsiniz.</p>
+            <p style="margin-top: 4px;">Klavye Kısayolları: <kbd>W</kbd> Gaz | <kbd>S</kbd> Fren | <kbd>E</kbd> Vites Yükselt | <kbd>Q</kbd> Vites Düşür | <kbd>M</kbd> Sesi Kapat/Aç</p>
         </footer>
+    </div>
+
+    <!-- Saf Kokpit Modundan Çıkış Butonu (Yalnızca Saf Kokpit Modunda görünür) -->
+    <button class="pure-cockpit-exit-btn" id="exitPureCockpitBtn" title="Kokpit Görünümünden Çık">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        <span>STANDART GÖRÜNÜME DÖN</span>
+    </button>
+
+    <!-- Tesla & Tam Ekran Bilgi / Seçici Modalı -->
+    <div class="modal-overlay" id="teslaFullscreenModal">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3>🖥️ Tesla Tam Ekran Çözümü</h3>
+                <button class="modal-close-btn" id="closeTeslaFullscreenModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.88rem; line-height: 1.5;">
+                    Tesla'nın dahili Chromium tarayıcısı, güvenlik politikası sebebiyle web sitelerinin tek tıkla standart HTML5 tam ekranına geçmesine izin vermez. İhtiyacınıza uygun modu seçebilirsiniz:
+                </p>
+
+                <div class="tesla-mode-card" id="triggerPureCockpitCard">
+                    <div class="tesla-mode-icon">🏎️</div>
+                    <div class="tesla-mode-info">
+                        <strong>1. Saf Kokpit Modu (Tavsiye Edilen)</strong>
+                        <p>Tarayıcı adres çubuğunu tutarak gereksiz tüm ayar ve garaj panellerini gizler; dev kadranı ve vites kulakçıklarını tüm ekrana yayar.</p>
+                        <button class="modal-btn" id="activatePureCockpitBtn" style="margin-top: 10px; width: 100%; padding: 10px;">SAF KOKPİT MODUNU AÇ</button>
+                    </div>
+                </div>
+
+                <div class="tesla-mode-card" style="margin-top: 14px;">
+                    <div class="tesla-mode-icon">🎬</div>
+                    <div class="tesla-mode-info">
+                        <strong>2. Tesla Sinema Modu (Sıfır Çerçeve)</strong>
+                        <p>Tesla'nın YouTube video oynatıcısı üzerinden yönlendirme yaparak tarayıcı çerçevesini tamamen yok eder ve sıfır çerçeve tam ekran sağlar.</p>
+                        <a href="https://www.youtube.com/redirect?q=https%3A%2F%2Fteslasound.pages.dev" target="_blank" rel="noopener noreferrer" class="modal-btn" id="teslaCinemaLink" style="display: block; text-align: center; text-decoration: none; margin-top: 10px; width: 100%; padding: 10px; background: #e50914;">TESLA SİNEMA İLE AÇ (YOUTUBE)</a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="rememberPureCockpitPref"> Tam ekran butonuna basınca direkt Kokpit Modu açılsın
+                </label>
+                <button class="pill-btn" id="dismissTeslaModalBtn" style="padding: 8px 16px;">Kapat</button>
+            </div>
+        </div>
     </div>
 
     <!-- Help / Guide Modal -->
@@ -263,14 +313,15 @@
                     <span class="guide-icon">🛰️</span>
                     <div>
                         <strong>2. Otomatik Çalışma ve Gerçek Zamanlı Fizik</strong>
-                        <p>Sayfa açıldığında motor otomatik çalışır ve rölantiye geçer. Tarayıcınızın GPS ve hareket izinlerini onaylamanız yeterlidir. Sistem 60 FPS öngörülü fizik ve donanım ivmeölçeriyle motor yüküne göre egzoz valflerini açar ve vitesleri dinamik değiştirir.</p>
+                        <p>Sayfa açıldığında motor anında devreye girer. Tarayıcınızın GPS ve hareket izinlerini onaylamanız yeterlidir. Sistem 60 FPS öngörülü fizik ve donanım ivmeölçeriyle motor yüküne göre egzoz valflerini açar ve vitesleri dinamik değiştirir.</p>
                     </div>
                 </div>
                 <div class="guide-item">
                     <span class="guide-icon">🎮</span>
                     <div>
-                        <strong>3. Tesla Direksiyon Tekerleği Kontrolü</strong>
-                        <p>Tesla dahili tarayıcısında direksiyonun <strong>sol kaydırma tekerleğini</strong> yukarı kaydırarak vites büyütebilir, aşağı kaydırarak vites küçültebilirsiniz (Paddle Shift hissi)!</p>
+                        <strong>3. Vites Geçişleri ve Kulakçıklar (Paddle Shift)</strong>
+                        <p><strong>Otomatik Mod:</strong> Gerçek bir spor otomobil gibi hızlandıkça ve gaza yüklendikçe vitesler devir limitinde kendiliğinden büyür ve patlar (upshift pop).<br>
+                        <strong>Manuel Mod:</strong> Kadranın hemen altındaki dokunmatik <strong>[ − ]</strong> ve <strong>[ + ]</strong> kulakçıklarına dokunarak veya klavyeden <strong>E / Q</strong> tuşlarıyla anında vites atabilirsiniz.</p>
                     </div>
                 </div>
                 <div class="guide-item">
@@ -303,6 +354,7 @@
 
     <!-- Scripts -->
     <script src="vehicles.js"></script>
+    <script src="engine-dsp.js"></script>
     <script src="audio-engine.js"></script>
     <script src="physics.js"></script>
     <script src="app.js"></script>

@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const engineBadge = document.getElementById('engineBadge');
     const engineStatusDot = document.getElementById('engineStatusDot');
     const engineBadgeText = document.getElementById('engineBadgeText');
-    const autoStartBtn = document.getElementById('autoStartBtn');
 
     // Controls
     const driveModeAuto = document.getElementById('modeAuto');
@@ -44,6 +43,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const simBrakeBtn = document.getElementById('simBrakeBtn');
     const paddleUp = document.getElementById('paddleUp');
     const paddleDown = document.getElementById('paddleDown');
+    const cockpitPaddleUp = document.getElementById('cockpitPaddleUp');
+    const cockpitPaddleDown = document.getElementById('cockpitPaddleDown');
+    const exitPureCockpitBtn = document.getElementById('exitPureCockpitBtn');
+    const teslaFullscreenModal = document.getElementById('teslaFullscreenModal');
+    const closeTeslaFullscreenModal = document.getElementById('closeTeslaFullscreenModal');
+    const dismissTeslaModalBtn = document.getElementById('dismissTeslaModalBtn');
+    const activatePureCockpitBtn = document.getElementById('activatePureCockpitBtn');
+    const rememberPureCockpitPref = document.getElementById('rememberPureCockpitPref');
+    const teslaCinemaLink = document.getElementById('teslaCinemaLink');
     const simSpeedSlider = document.getElementById('simSpeedSlider');
     const exhaustModeBtns = document.querySelectorAll('[data-exhaust]');
     const volumeSlider = document.getElementById('volumeSlider');
@@ -95,12 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${features.map(f => `<span style="font-size:0.62rem; background:var(--bg-primary); border:1px solid var(--border-color); padding:2px 6px; border-radius:8px; color:var(--text-secondary);">${f}</span>`).join('')}
                 </div>
             `;
-            card.addEventListener('click', () => selectVehicle(profile));
+            card.addEventListener('click', () => selectVehicle(profile, true));
             carsGrid.appendChild(card);
         });
     }
 
-    function selectVehicle(profile) {
+    async function selectVehicle(profile, autoStart = false) {
         selectedVehicle = profile;
         document.documentElement.style.setProperty('--car-accent', profile.accentColor);
         document.documentElement.style.setProperty('--car-glow', profile.glowColor);
@@ -116,55 +124,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update physics and audio
         physics.setProfile(profile);
-        if (isEngineRunning) {
-            audio.loadProfile(profile);
-        }
 
         const soundProfileText = document.getElementById('soundProfileText');
         if (soundProfileText) {
             soundProfileText.textContent = profile.soundDescription;
         }
-    }
 
-    // 4. Tactical Supercar Engine Start / Stop Controller
-    let autoStartEnabled = localStorage.getItem('teslasound_autostart') === 'true';
-
-    function updateAutoStartUI() {
-        if (autoStartBtn) {
-            autoStartBtn.textContent = autoStartEnabled ? 'Açık' : 'Kapalı';
-            if (autoStartEnabled) {
-                autoStartBtn.classList.add('active');
-            } else {
-                autoStartBtn.classList.remove('active');
-            }
+        // Araç değişiminde motor çalışıyorsa yeni aracı doğrudan çalıştır
+        if (isEngineRunning || autoStart) {
+            stopEngineImmediate();
+            await startEngine();
+        } else {
+            audio.loadProfile(profile);
         }
-    }
-    updateAutoStartUI();
-
-    if (autoStartBtn) {
-        autoStartBtn.addEventListener('click', () => {
-            autoStartEnabled = !autoStartEnabled;
-            localStorage.setItem('teslasound_autostart', autoStartEnabled ? 'true' : 'false');
-            updateAutoStartUI();
-        });
     }
 
     function updateEngineButtonUI(state) {
         if (!engineStartStopBtn) return;
 
-        if (state === 'cranking') {
-            engineStartStopBtn.className = 'engine-start-stop-btn cranking';
-            if (engineBtnLabel) engineBtnLabel.textContent = 'CRANKING...';
-            if (engineStatusDot) {
-                engineStatusDot.style.background = '#f59e0b';
-                engineStatusDot.style.boxShadow = '0 0 10px #f59e0b';
-            }
-            if (engineBadgeText) {
-                engineBadgeText.textContent = 'MARŞ ALIYOR';
-                engineBadgeText.style.color = '#fbbf24';
-            }
-            if (engineBadge) engineBadge.style.borderColor = 'rgba(245, 158, 11, 0.45)';
-        } else if (state === 'running') {
+        if (state === 'running') {
             engineStartStopBtn.className = 'engine-start-stop-btn running';
             if (engineBtnLabel) engineBtnLabel.textContent = 'STOP ENGINE';
             if (engineStatusDot) {
@@ -193,19 +171,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function startEngine() {
-        if (physics.isStarting || isEngineRunning) return;
+        if (isEngineRunning) return;
         try {
             await audio.init();
             physics.setProfile(selectedVehicle);
             audio.loadProfile(selectedVehicle);
 
-            updateEngineButtonUI('cranking');
+            isEngineRunning = true;
+            updateEngineButtonUI('running');
+            requestWakeLock();
 
             physics.startEngineSequence(() => {
-                isEngineRunning = true;
-                updateEngineButtonUI('running');
-                requestWakeLock();
-
                 if (!physics.isSimulating) {
                     startGpsTracking();
                     startMotionTracking();
@@ -217,8 +193,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function stopEngineImmediate() {
+        physics.isStarting = false;
+        physics.isEngineRunning = false;
+        isEngineRunning = false;
+        physics.targetThrottle = 0;
+        physics.throttle = 0;
+        physics.currentRpm = 0;
+        physics.targetRpm = 0;
+        audio.stop();
+        updateEngineButtonUI('off');
+    }
+
     function stopEngine() {
-        if (!isEngineRunning && !physics.isStarting) return;
+        if (!isEngineRunning) return;
         isEngineRunning = false;
         updateEngineButtonUI('off');
 
@@ -232,7 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleEngine() {
-        if (physics.isStarting) return;
         if (isEngineRunning) {
             stopEngine();
         } else {
@@ -247,13 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Browser Autoplay Policy: If auto-start is active, first touch starts engine
+    // Browser Autoplay Policy: User first touch initializes audio context
     const unlockOnUserGesture = async () => {
         if (!audio.ctx || audio.ctx.state === 'suspended') {
             await audio.init();
-        }
-        if (autoStartEnabled && !isEngineRunning && !physics.isStarting) {
-            await startEngine();
         }
         ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
             document.removeEventListener(evt, unlockOnUserGesture);
@@ -353,23 +337,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 7. Mode Toggles (Auto vs Manual, GPS vs Simulator)
-    driveModeAuto.addEventListener('click', () => {
-        driveModeAuto.classList.add('active');
-        driveModeManual.classList.remove('active');
-        physics.setTransmissionMode('auto');
-    });
+    function setTransmissionMode(mode) {
+        physics.setTransmissionMode(mode);
+        if (driveModeAuto && driveModeManual) {
+            if (mode === 'auto') {
+                driveModeAuto.classList.add('active');
+                driveModeManual.classList.remove('active');
+            } else {
+                driveModeManual.classList.add('active');
+                driveModeAuto.classList.remove('active');
+            }
+        }
+    }
 
-    driveModeManual.addEventListener('click', () => {
-        driveModeManual.classList.add('active');
-        driveModeAuto.classList.remove('active');
-        physics.setTransmissionMode('manual');
-    });
+    driveModeAuto.addEventListener('click', () => setTransmissionMode('auto'));
+    driveModeManual.addEventListener('click', () => setTransmissionMode('manual'));
+
+    const gaugeCenterReadout = document.getElementById('gaugeCenterReadout');
+    const gearModeLabel = document.getElementById('gearModeLabel');
+    if (gaugeCenterReadout) {
+        gaugeCenterReadout.addEventListener('click', () => {
+            const nextMode = physics.transmissionMode === 'auto' ? 'manual' : 'auto';
+            setTransmissionMode(nextMode);
+            if (navigator.vibrate) {
+                try { navigator.vibrate(20); } catch (_) {}
+            }
+        });
+    }
+
+    function updateCockpitPaddlesUI(isSim) {
+        const downLabel = document.getElementById('paddleDownLabel');
+        const upLabel = document.getElementById('paddleUpLabel');
+        if (!downLabel || !upLabel) return;
+        if (isSim) {
+            downLabel.textContent = '−';
+            downLabel.className = 'paddle-label paddle-sym';
+            upLabel.textContent = '+';
+            upLabel.className = 'paddle-label paddle-sym';
+        } else {
+            downLabel.textContent = 'VİTES DÜŞÜR';
+            downLabel.className = 'paddle-label paddle-text';
+            upLabel.textContent = 'VİTES YÜKSELT';
+            upLabel.className = 'paddle-label paddle-text';
+        }
+    }
 
     sourceGps.addEventListener('click', () => {
         sourceGps.classList.add('active');
         sourceSim.classList.remove('active');
         simDrawer.classList.remove('active');
         physics.isSimulating = false;
+        physics.setSimPedal(false);
+        physics.setSimBrake(false);
+        physics.acceleration = 0;
+        physics.targetThrottle = 0;
+        updateCockpitPaddlesUI(false);
         if (isEngineRunning) {
             startGpsTracking();
             startMotionTracking();
@@ -385,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stopMotionTracking();
         gpsStatusDot.className = 'status-dot active';
         gpsStatusText.textContent = 'TEST BENCH ACTIVE';
+        updateCockpitPaddlesUI(true);
     });
 
     // 8. Simulator Controls
@@ -407,8 +430,42 @@ document.addEventListener('DOMContentLoaded', () => {
     bindPedal(simGasBtn, () => physics.setSimPedal(true), () => physics.setSimPedal(false));
     bindPedal(simBrakeBtn, () => physics.setSimBrake(true), () => physics.setSimBrake(false));
 
-    paddleUp.addEventListener('click', () => physics.shiftUp());
-    paddleDown.addEventListener('click', () => physics.shiftDown());
+    function triggerManualShift(isUp) {
+        if (!isEngineRunning) {
+            startEngine();
+        }
+        if (physics.transmissionMode !== 'manual') {
+            setTransmissionMode('manual');
+        }
+        if (isUp) {
+            physics.shiftUp();
+        } else {
+            physics.shiftDown();
+        }
+    }
+
+    function bindPaddle(btn, isUp) {
+        if (!btn) return;
+        const trigger = (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            btn.classList.add('pressed');
+            setTimeout(() => btn.classList.remove('pressed'), 140);
+            if (navigator.vibrate) {
+                try { navigator.vibrate(25); } catch (_) {}
+            }
+            triggerManualShift(isUp);
+        };
+        btn.addEventListener('pointerdown', trigger);
+        btn.addEventListener('click', (e) => e.preventDefault());
+    }
+
+    bindPaddle(cockpitPaddleUp, true);
+    bindPaddle(cockpitPaddleDown, false);
+    bindPaddle(paddleUp, true);
+    bindPaddle(paddleDown, false);
 
     simSpeedSlider.addEventListener('input', (e) => {
         physics.setManualSpeedKmh(parseFloat(e.target.value));
@@ -427,12 +484,98 @@ document.addEventListener('DOMContentLoaded', () => {
         audio.setMasterVolume(parseFloat(e.target.value));
     });
 
-    // 10. Fullscreen Toggle (Great for Tesla Browser)
-    fullscreenBtn.addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        } else {
+    // 10. Tesla & Tam Ekran Çözümü (Saf Kokpit & Sinema Modu)
+    function enterPureCockpit() {
+        document.body.classList.add('pure-cockpit-mode');
+        if (teslaFullscreenModal) teslaFullscreenModal.classList.remove('active');
+    }
+
+    function exitPureCockpit() {
+        document.body.classList.remove('pure-cockpit-mode');
+        if (document.fullscreenElement) {
             document.exitFullscreen().catch(() => {});
+        }
+    }
+
+    if (exitPureCockpitBtn) {
+        exitPureCockpitBtn.addEventListener('click', exitPureCockpit);
+    }
+
+    // Tesla Sinema Linki için dinamik canlı URL
+    if (teslaCinemaLink) {
+        const targetUrl = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+            ? 'https://teslasound.pages.dev/'
+            : window.location.href;
+        teslaCinemaLink.href = `https://www.youtube.com/redirect?q=${encodeURIComponent(targetUrl)}`;
+    }
+
+    // Doğrudan Kokpit Modu tercihini hatırla
+    if (rememberPureCockpitPref) {
+        rememberPureCockpitPref.checked = localStorage.getItem('teslaSound_directCockpit') === 'true';
+        rememberPureCockpitPref.addEventListener('change', () => {
+            localStorage.setItem('teslaSound_directCockpit', rememberPureCockpitPref.checked ? 'true' : 'false');
+        });
+    }
+
+    if (activatePureCockpitBtn) {
+        activatePureCockpitBtn.addEventListener('click', () => {
+            enterPureCockpit();
+        });
+    }
+
+    const closeTeslaModal = () => {
+        if (teslaFullscreenModal) teslaFullscreenModal.classList.remove('active');
+    };
+    if (closeTeslaFullscreenModal) closeTeslaFullscreenModal.addEventListener('click', closeTeslaModal);
+    if (dismissTeslaModalBtn) dismissTeslaModalBtn.addEventListener('click', closeTeslaModal);
+    if (teslaFullscreenModal) {
+        teslaFullscreenModal.addEventListener('click', (e) => {
+            if (e.target === teslaFullscreenModal) closeTeslaModal();
+        });
+    }
+
+    fullscreenBtn.addEventListener('click', async () => {
+        // Zaten Saf Kokpit Modundaysa çıkış yap
+        if (document.body.classList.contains('pure-cockpit-mode')) {
+            exitPureCockpit();
+            return;
+        }
+
+        const directCockpit = localStorage.getItem('teslaSound_directCockpit') === 'true';
+        const isTesla = /Tesla/i.test(navigator.userAgent);
+
+        // Kullanıcı doğrudan geçiş seçtiyse veya Tesla tarayıcısı ise hemen Saf Kokpit Moduna geç
+        if (directCockpit || isTesla) {
+            enterPureCockpit();
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+            return;
+        }
+
+        // Standart tarayıcılarda HTML5 Fullscreen dene
+        try {
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+                enterPureCockpit();
+                return;
+            }
+        } catch (err) {
+            // Fullscreen kısıtlandı (Tesla Chromium veya güvenlik politikası)
+        }
+
+        // Kısıtlıysa veya reddedildiyse Tesla Fullscreen Seçenek Modalı göster
+        if (teslaFullscreenModal) {
+            teslaFullscreenModal.classList.add('active');
+        } else {
+            enterPureCockpit();
+        }
+    });
+
+    // ESC tuşu ile Saf Kokpitten çıkış
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('pure-cockpit-mode')) {
+            exitPureCockpit();
         }
     });
 
@@ -454,32 +597,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 11. Steering Wheel & Keyboard Interactivity
-    // In Tesla Browser: Steering wheel scroll wheels emit 'wheel' events!
+    // 11. Mouse Wheel / Hardware Input (Paddle Shift)
     window.addEventListener('wheel', (e) => {
         if (!isEngineRunning) return;
-        if (e.deltaY < 0) {
-            // Scroll Up: Upshift
-            physics.shiftUp();
-        } else if (e.deltaY > 0) {
-            // Scroll Down: Downshift
-            physics.shiftDown();
-        }
+        triggerManualShift(e.deltaY < 0);
     }, { passive: true });
 
     // Keyboard Shortcuts (Desktop / Simulator Testing)
     window.addEventListener('keydown', (e) => {
         if (e.repeat) return;
         if (e.code === 'KeyW' || e.code === 'ArrowUp') {
-            physics.setSimPedal(true);
-            simGasBtn.classList.add('pressed');
+            if (physics.isSimulating) {
+                physics.setSimPedal(true);
+                simGasBtn.classList.add('pressed');
+            }
         } else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
-            physics.setSimBrake(true);
-            simBrakeBtn.classList.add('pressed');
+            if (physics.isSimulating) {
+                physics.setSimBrake(true);
+                simBrakeBtn.classList.add('pressed');
+            }
         } else if (e.code === 'KeyE' || e.code === 'BracketRight') {
-            physics.shiftUp();
+            triggerManualShift(true);
         } else if (e.code === 'KeyQ' || e.code === 'BracketLeft') {
-            physics.shiftDown();
+            triggerManualShift(false);
         } else if (e.code === 'KeyM') {
             e.preventDefault();
             if (audio.masterVolume > 0) {
@@ -693,7 +833,21 @@ document.addEventListener('DOMContentLoaded', () => {
         throttleMeterFill.style.width = `${throttlePct}%`;
         accelValue.textContent = `${physics.acceleration >= 0 ? '+' : ''}${physics.acceleration.toFixed(1)} m/s²`;
 
-        gearDisplay.textContent = physics.currentSpeedKmh < 0.5 ? 'N' : gear;
+        const isAuto = physics.transmissionMode === 'auto';
+        const isSingleGear = selectedVehicle.gears.length === 1;
+
+        if (gearModeLabel) {
+            gearModeLabel.textContent = isAuto ? 'OTOMATİK' : 'MANUEL';
+            gearModeLabel.style.color = isAuto ? 'var(--text-dim)' : 'var(--car-accent)';
+        }
+
+        if (physics.currentSpeedKmh < 0.5) {
+            gearDisplay.textContent = 'N';
+        } else if (isSingleGear) {
+            gearDisplay.textContent = isAuto ? 'D' : 'EV';
+        } else {
+            gearDisplay.textContent = isAuto ? `D${gear}` : `M${gear}`;
+        }
 
 
         // Render shift lights & gauge
@@ -726,8 +880,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize UI
     renderVehicles();
-    selectVehicle(VEHICLE_PROFILES[0]);
+    selectVehicle(VEHICLE_PROFILES[0], false);
     updateEngineButtonUI('off');
+    updateCockpitPaddlesUI(false);
     requestAnimationFrame(mainLoop);
 
     // Register PWA Service Worker (Safari/WebKit Redirect-Safe)

@@ -43,32 +43,19 @@ class VehiclePhysics {
     }
 
     /**
-     * Start engine sequence with starter cranking and cold-start flare
+     * Start engine immediately with instant idle engagement
      */
     startEngineSequence(onComplete) {
         if (!this.profile) return;
-        this.isStarting = true;
-        this.isEngineRunning = false;
-        this.currentRpm = 0;
-        this.targetRpm = 0;
+        this.isStarting = false;
+        this.isEngineRunning = true;
+        this.currentRpm = this.profile.idleRpm;
+        this.targetRpm = this.profile.idleRpm;
+        this.throttle = 0;
+        this.targetThrottle = 0;
 
         this.audio.triggerIgnitionAudio(this.profile, () => {
-            // Combustion bite! Cold-start rev flare
-            this.isStarting = false;
-            this.isEngineRunning = true;
-            this.currentRpm = this.profile.idleRpm + 600;
-            this.targetRpm = this.profile.idleRpm + 1900;
-            this.targetThrottle = 0.65;
-
-            // Hold peak flare for 250ms, then glide smoothly to warm idle
-            setTimeout(() => {
-                this.targetRpm = this.profile.idleRpm;
-                this.targetThrottle = 0.0;
-            }, 250);
-
-            setTimeout(() => {
-                if (onComplete) onComplete();
-            }, 650);
+            if (onComplete) onComplete();
         });
     }
 
@@ -181,13 +168,6 @@ class VehiclePhysics {
         if (!this.profile) return;
 
         if (!this.isEngineRunning) {
-            if (this.isStarting) {
-                // Starter motor is cranking crankshaft at ~180-230 RPM
-                const crankJitter = Math.sin(Date.now() * 0.08) * 30;
-                this.currentRpm = Math.max(160, 210 + crankJitter);
-                this.audio.update(this.currentRpm, 0.0, 0, 0);
-                return;
-            }
             this.targetThrottle = 0;
             this.throttle = 0;
             this.simPedalDown = false;
@@ -203,12 +183,16 @@ class VehiclePhysics {
         if (this.isSimulating) {
             this._updateSimulation(dt);
         } else {
-            // Real-time dead-reckoning speed integration between GPS updates
-            if (this.acceleration > 0.2) {
+            // Real-time dead-reckoning speed integration between GPS updates (only while in motion)
+            if (this.targetSpeedKmh > 1.0 && this.acceleration > 0.2) {
                 this.currentSpeedKmh = Math.min(260, this.currentSpeedKmh + this.acceleration * dt * 3.6);
             }
             const speedSmoothingFactor = Math.min(1.0, dt * 10.0);
             this.currentSpeedKmh += (this.targetSpeedKmh - this.currentSpeedKmh) * speedSmoothingFactor;
+            if (this.targetSpeedKmh < 0.5 && this.currentSpeedKmh < 0.5) {
+                this.currentSpeedKmh = 0;
+                this.acceleration = 0;
+            }
         }
 
         // Throttle response smoothing
@@ -368,11 +352,19 @@ class VehiclePhysics {
     }
 
     setSimPedal(isPressed) {
+        if (!this.isSimulating) {
+            this.simPedalDown = false;
+            return;
+        }
         this.simPedalDown = isPressed;
         this.targetThrottle = isPressed ? 1.0 : 0.0;
     }
 
     setSimBrake(isPressed) {
+        if (!this.isSimulating) {
+            this.simBrakeDown = false;
+            return;
+        }
         this.simBrakeDown = isPressed;
         if (isPressed) {
             this.targetThrottle = 0.0;
