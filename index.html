@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TeslaSound | Tesla & EV Virtual Engine Sound Cockpit</title>
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+    <meta name="theme-color" content="#08090d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TeslaSound">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Bar -->
+        <header class="header-bar">
+            <div class="brand-section">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.22.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/>
+                        <circle cx="7.5" cy="14.5" r="1.5"/>
+                        <circle cx="16.5" cy="14.5" r="1.5"/>
+                    </svg>
+                </div>
+                <div class="brand-name">Tesla<span>Sound</span></div>
+            </div>
+
+            <!-- Tactical Supercar ENGINE START / STOP Button -->
+            <button class="engine-start-stop-btn off" id="engineStartStopBtn" title="Arrancar / Parar el motor (Barra espaciadora)" aria-label="Arrancar / Parar el motor">
+                <span class="engine-btn-halo"></span>
+                <span class="engine-btn-bezel">
+                    <svg class="engine-power-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
+                    <span class="engine-btn-label" id="engineBtnLabel">START ENGINE</span>
+                </span>
+            </button>
+
+            <div class="header-badges">
+                <div class="status-badge" id="engineBadge" style="border-color: rgba(239, 68, 68, 0.35);">
+                    <div class="status-dot" id="engineStatusDot" style="background: #ef4444; box-shadow: 0 0 8px #ef4444;"></div>
+                    <span id="engineBadgeText" style="color: #f87171;">STANDBY</span>
+                </div>
+                <div class="status-badge" id="gpsBadge">
+                    <div class="status-dot" id="gpsStatusDot"></div>
+                    <span id="gpsStatusText">GPS STANDBY</span>
+                </div>
+                <button class="btn-icon" id="helpBtn" title="¿Cómo se usa?">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <circle cx="12" cy="17" r="1.1" fill="currentColor" stroke="none"></circle>
+                    </svg>
+                </button>
+                <a href="https://github.com/aranelpalantir/TeslaSound" target="_blank" rel="noopener noreferrer" class="btn-icon" title="GitHub (Código abierto)" aria-label="GitHub Repository">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                </a>
+                <button class="btn-icon" id="fullscreenBtn" title="Pantalla completa">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- F1 / GT3 Shift Lights LED Bar -->
+        <div class="shift-lights-bar">
+            <div class="led green"></div>
+            <div class="led green"></div>
+            <div class="led green"></div>
+            <div class="led green"></div>
+            <div class="led yellow"></div>
+            <div class="led yellow"></div>
+            <div class="led yellow"></div>
+            <div class="led red"></div>
+            <div class="led red"></div>
+            <div class="led red"></div>
+        </div>
+
+        <!-- Cockpit Cluster Main Grid -->
+        <main class="cockpit-grid">
+            <!-- Left Telemetry -->
+            <div class="telemetry-card">
+                <div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-title">Acelerador / Carga del motor</span>
+                        <span class="telemetry-value" id="throttleValue">0%</span>
+                    </div>
+                    <div class="meter-bar-container">
+                        <div class="meter-bar-fill" id="throttleMeterFill"></div>
+                    </div>
+                </div>
+
+                <div class="telemetry-row">
+                    <span class="telemetry-title">Aceleración (Fuerza G)</span>
+                    <span class="telemetry-value" id="accelValue">+0.0 m/s²</span>
+                </div>
+
+                <div class="telemetry-row">
+                    <span class="telemetry-title">Tipo de transmisión</span>
+                    <span class="telemetry-value" id="transTypeDisplay">7 marchas DCT</span>
+                </div>
+            </div>
+
+            <!-- Central Tachometer & Speedometer -->
+            <div class="instrument-card">
+                <div class="gauge-canvas-wrapper">
+                    <canvas id="gaugeCanvas" width="280" height="280"></canvas>
+                    <div class="gauge-center-readout" id="gaugeCenterReadout" title="Cambiar modo de marchas (Automático / Manual)">
+                        <div class="gear-label" id="gearModeLabel">AUTOMÁTICO</div>
+                        <div class="gear-display" id="gearDisplay">N</div>
+                        <div class="speed-value" id="speedValue">0</div>
+                        <div class="speed-unit">KM/H</div>
+                    </div>
+                </div>
+
+                <!-- Levas de cambio ergonómicas del cockpit (Paddle Shifters) -->
+                <div class="cockpit-paddles" id="cockpitPaddles">
+                    <button class="cockpit-paddle-btn paddle-down" id="cockpitPaddleDown" aria-label="Reducir marcha" title="Reducir marcha">
+                        <span id="paddleDownLabel" class="paddle-label paddle-text">REDUCIR MARCHA</span>
+                    </button>
+                    <button class="cockpit-paddle-btn paddle-up" id="cockpitPaddleUp" aria-label="Subir marcha" title="Subir marcha">
+                        <span id="paddleUpLabel" class="paddle-label paddle-text">SUBIR MARCHA</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Telemetry -->
+            <div class="telemetry-card">
+                <div class="telemetry-row">
+                    <span class="telemetry-title">Régimen del motor</span>
+                    <span class="telemetry-value" id="rpmValue">900</span>
+                </div>
+
+                <div>
+                    <span class="telemetry-title" style="margin-bottom: 6px; display: block;">Espectro acústico</span>
+                    <div class="visualizer-wrapper">
+                        <canvas id="visualizerCanvas" width="280" height="48"></canvas>
+                    </div>
+                </div>
+
+                <div class="telemetry-row">
+                    <span class="telemetry-title">Válvula de escape</span>
+                    <span class="telemetry-value" style="color: var(--car-accent);" id="exhaustStatusText">Abierta</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Primary Controls Strip (Ajustes de marchas y escape arriba) -->
+        <section class="controls-card">
+            <!-- Mode Selector: Auto vs Manual -->
+            <div class="control-group">
+                <span class="control-label">Marchas:</span>
+                <div class="pill-toggle">
+                    <button class="pill-btn active" id="modeAuto">Automático</button>
+                    <button class="pill-btn" id="modeManual">Manual</button>
+                </div>
+            </div>
+
+            <!-- Exhaust Mode -->
+            <div class="control-group">
+                <span class="control-label">Escape:</span>
+                <div class="pill-toggle">
+                    <button class="pill-btn" data-exhaust="quiet">Silencioso</button>
+                    <button class="pill-btn" data-exhaust="sport">Sport</button>
+                    <button class="pill-btn active" data-exhaust="race">Race</button>
+                    <button class="pill-btn" data-exhaust="straight_pipe">Tubo recto</button>
+                </div>
+            </div>
+
+            <!-- Source Selector: GPS vs Test Bench -->
+            <div class="control-group">
+                <span class="control-label">Fuente:</span>
+                <div class="pill-toggle">
+                    <button class="pill-btn active" id="sourceGps">GPS (Conducción)</button>
+                    <button class="pill-btn" id="sourceSim">Banco de pruebas</button>
+                </div>
+            </div>
+
+            <!-- Volume Control -->
+            <div class="control-group" style="min-width: 140px;">
+                <span class="control-label">Volumen:</span>
+                <div class="slider-container" style="flex: 1;">
+                    <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.85">
+                </div>
+            </div>
+        </section>
+
+        <!-- Test Bench / Simulator Drawer (Activo cuando se elige "Banco de pruebas") -->
+        <div class="simulator-drawer" id="simDrawer">
+            <div class="section-title" style="color: var(--car-accent);">Modo de pruebas en escritorio / casa (pedales de acelerador y freno)</div>
+            <div class="sim-pedals-row">
+                <button class="sim-pedal-btn sim-gas-btn" id="simGasBtn">
+                    ACELERAR (W / FLECHA ARRIBA)
+                </button>
+                <button class="sim-pedal-btn sim-brake-btn" id="simBrakeBtn">
+                    FRENAR (S / FLECHA ABAJO)
+                </button>
+            </div>
+            <div class="sim-paddles-row">
+                <button class="paddle-btn" id="paddleDown">[- REDUCIR MARCHA (Q)]</button>
+                <button class="paddle-btn" id="paddleUp">[+ SUBIR MARCHA (E)]</button>
+            </div>
+            <div class="slider-container">
+                <span class="control-label" style="min-width: 100px;">Prueba de velocidad fija:</span>
+                <input type="range" id="simSpeedSlider" min="0" max="260" step="1" value="0">
+            </div>
+        </div>
+
+        <!-- Car Selection Carousel -->
+        <section class="garage-section">
+            <div class="section-header">
+                <span class="section-title">🏎️ Garaje / Selección de vehículo</span>
+            </div>
+            <div class="cars-grid" id="carsGrid">
+                <!-- Dynamically populated from vehicles.js -->
+            </div>
+            <!-- Barra descriptiva del perfil de sonido -->
+            <div id="soundProfileBar" style="
+                margin-top: 10px;
+                background: var(--bg-panel);
+                border: 1px solid var(--border-color);
+                border-left: 3px solid var(--car-accent);
+                border-radius: 10px;
+                padding: 10px 16px;
+                font-size: 0.8rem;
+                color: var(--text-secondary);
+                line-height: 1.5;
+                transition: border-color 0.3s ease;
+            ">
+                <span style="color: var(--car-accent); font-weight: 700; margin-right: 6px; transition: color 0.3s ease;">🔊 Carácter del sonido:</span>
+                <span id="soundProfileText"></span>
+            </div>
+        </section>
+
+        <!-- Guidance & Tesla Fullscreen Footer -->
+        <footer class="footer-tips">
+            <p><strong>Consejo Tesla:</strong> En la pantalla de tu Tesla, toca el icono de <strong>Pantalla completa</strong> de la esquina superior derecha para activar el Modo Cockpit Puro y toca las levas <strong>REDUCIR MARCHA</strong> y <strong>SUBIR MARCHA</strong>, justo debajo del cuadrante, para cambiar de marcha manualmente a tu gusto.</p>
+            <p style="margin-top: 4px;">Atajos de teclado: <kbd>W</kbd> Acelerar | <kbd>S</kbd> Frenar | <kbd>E</kbd> Subir marcha | <kbd>Q</kbd> Reducir marcha | <kbd>M</kbd> Silenciar/Activar sonido</p>
+        </footer>
+    </div>
+
+    <!-- Botón de salida del Modo Cockpit Puro (solo visible en Modo Cockpit Puro) -->
+    <button class="pure-cockpit-exit-btn" id="exitPureCockpitBtn" title="Salir de la vista de cockpit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        <span>VOLVER A LA VISTA ESTÁNDAR</span>
+    </button>
+
+    <!-- Modal informativo / selector de pantalla completa de Tesla -->
+    <div class="modal-overlay" id="teslaFullscreenModal">
+        <div class="modal-content" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3>🖥️ Solución de pantalla completa de Tesla</h3>
+                <button class="modal-close-btn" id="closeTeslaFullscreenModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.88rem; line-height: 1.5;">
+                    El navegador Chromium integrado de Tesla no permite, por su política de seguridad, que los sitios web pasen a pantalla completa HTML5 estándar con un solo toque. Puedes elegir el modo que mejor se adapte a tus necesidades:
+                </p>
+
+                <div class="tesla-mode-card" id="triggerPureCockpitCard">
+                    <div class="tesla-mode-icon">🏎️</div>
+                    <div class="tesla-mode-info">
+                        <strong>1. Modo Cockpit Puro (Recomendado)</strong>
+                        <p>Mantiene la barra de direcciones del navegador, oculta todos los paneles innecesarios de ajustes y garaje, y extiende el cuadrante gigante y las levas de cambio por toda la pantalla.</p>
+                        <button class="modal-btn" id="activatePureCockpitBtn" style="margin-top: 10px; width: 100%; padding: 10px;">ACTIVAR MODO COCKPIT PURO</button>
+                    </div>
+                </div>
+
+                <div class="tesla-mode-card" style="margin-top: 14px;">
+                    <div class="tesla-mode-icon">🎬</div>
+                    <div class="tesla-mode-info">
+                        <strong>2. Modo Cine de Tesla (Sin marcos)</strong>
+                        <p>Redirigiendo a través del reproductor de vídeo de YouTube de Tesla, elimina por completo el marco del navegador y ofrece una pantalla completa sin bordes.</p>
+                        <a href="https://www.youtube.com/redirect?q=https%3A%2F%2Fteslasound.pages.dev" target="_blank" rel="noopener noreferrer" class="modal-btn" id="teslaCinemaLink" style="display: block; text-align: center; text-decoration: none; margin-top: 10px; width: 100%; padding: 10px; background: #e50914;">ABRIR CON TESLA CINE (YOUTUBE)</a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" id="rememberPureCockpitPref"> Al pulsar el botón de pantalla completa, abrir directamente el Modo Cockpit
+                </label>
+                <button class="pill-btn" id="dismissTeslaModalBtn" style="padding: 8px 16px;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help / Guide Modal -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>TeslaSound | Guía de uso</h3>
+                <button class="modal-close-btn" id="closeHelpModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="guide-item">
+                    <span class="guide-icon">🚗</span>
+                    <div>
+                        <strong>1. Tesla y conexión dentro del vehículo</strong>
+                        <p>Abre este sitio web directamente en el navegador de la pantalla táctil integrada de Tesla (Chromium) o ábrelo en tu móvil y conéctalo al sistema de sonido Bluetooth de Tesla. El subwoofer de Tesla te hará sentir en los asientos las vibraciones del motor.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-icon">🛰️</span>
+                    <div>
+                        <strong>2. Funcionamiento automático y física en tiempo real</strong>
+                        <p>Al abrir la página, el motor entra en funcionamiento al instante. Solo tienes que aceptar los permisos de GPS y movimiento del navegador. El sistema, con física predictiva a 60 FPS y el acelerómetro del dispositivo, abre las válvulas de escape según la carga del motor y cambia de marcha de forma dinámica.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-icon">🎮</span>
+                    <div>
+                        <strong>3. Cambios de marcha y levas (Paddle Shift)</strong>
+                        <p><strong>Modo automático:</strong> como en un auténtico deportivo, a medida que aceleras y pisas el gas, las marchas suben solas en el límite de revoluciones y sueltan un petardeo (upshift pop).<br>
+                        <strong>Modo manual:</strong> puedes cambiar de marcha al instante tocando las levas táctiles <strong>[ − ]</strong> y <strong>[ + ]</strong> justo debajo del cuadrante o con las teclas <strong>E / Q</strong> del teclado.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-icon">💥</span>
+                    <div>
+                        <strong>4. Tubo recto, turbo y petardeos (Pops & Bangs)</strong>
+                        <p>Si seleccionas el modo de escape <strong>"Tubo recto"</strong>, al soltar el acelerador de golpe se producen petardeos de escape (backfire). Con el Audi RS3 se activan el silbido del turbo y el sonido de la válvula blow-off (psshhh).</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-icon">💻</span>
+                    <div>
+                        <strong>5. Modo en casa / banco de pruebas</strong>
+                        <p>Cambiando en el selector de fuente al modo <strong>"Banco de pruebas"</strong>, puedes probar todos los sonidos y regímenes sin subirte al coche, con los pedales de Acelerador/Freno en pantalla o con las teclas <kbd>W</kbd>/<kbd>S</kbd> del teclado.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-icon">⭐</span>
+                    <div>
+                        <strong>6. Código abierto y GitHub</strong>
+                        <p>TeslaSound es de código abierto (MIT). Para explorar el proyecto, añadir sonidos de nuevos vehículos o colaborar, visita nuestro <a href="https://github.com/aranelpalantir/TeslaSound" target="_blank" rel="noopener noreferrer" style="color: var(--accent-red); text-decoration: underline;">repositorio de GitHub</a>.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" id="modalUnderstandBtn">ENTENDIDO, ¡EMPECEMOS!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="vehicles.js"></script>
+    <script src="engine-dsp.js"></script>
+    <script src="audio-engine.js"></script>
+    <script src="physics.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
